@@ -130,9 +130,9 @@ class CalibratorCatalogUpdate:
             self.types.append(self.typesList[i]['type_id'])
         if (tunnel==False):
             self.hostname= socket.gethostname()
-            if ('casa' not in self.hostname and 'scops' not in self.hostname and 'alma.cl' in self.hostname):
-                print "### WARNING: This script is only intended to be run from scops0X/casa0X.sco.alma.cl. ### \n### Unless you are doing specific testing, only run this from scops0X/casa0X.### \n"
-        #    sys.exit()
+        #     if ('casa' not in self.hostname and 'scops' not in self.hostname and 'alma.cl' in self.hostname):
+        #         print "### WARNING: This script is only intended to be run from scops0X/casa0X.sco.alma.cl. ### \n### Unless you are doing specific testing, only run this from scops0X/casa0X.### \n"
+        # #    sys.exit()
             
     def matchName(self, sourceName, Id = None, verbose = 1):
         """
