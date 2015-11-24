@@ -61,7 +61,8 @@ if __name__ == "__main__":
         npol=opts.npol,
         nant=opts.numAntennas,
         mode=opts.mode,
-        array=opts.arrayType)
+        array=opts.arrayType,
+        SNR=opts.snr)
 
     minFluxList = cs.np.array([s["minFlux"] for s in sensDataList])
     for s in sensDataList:
