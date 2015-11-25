@@ -3,8 +3,10 @@ import calcsens as cs
 import longbaseline_cal as lbl
 import pandas as pd
 import os
-
+import warnings
 from optparse import OptionParser
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 
 if __name__ == "__main__":
     parser = OptionParser()
@@ -78,7 +80,7 @@ if __name__ == "__main__":
         coords, radius=opts.radius, frequency=frequency, phasecal_flux_limit=minflux)
     df = pd.DataFrame(a).transpose()
 
-    df.query('fluxDensity > @minflux').sort(
+    df.query('fluxDensity >= @minflux').sort(
         'separationDegrees').to_csv('calib_candidates_hf.csv')
-    df.sort(
+    df[(df.fluxDensity.isnull()) | (df.fluxDensity < minflux)].sort(
             'separationDegrees').to_csv('cone_hf.csv')

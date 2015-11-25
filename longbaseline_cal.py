@@ -50,13 +50,13 @@ def find_nearest_vlbi_sources(
     """
 
     sourcecat = ServerProxy(server)
-    sourcelist, types = findnearestvlbi(
+    sourcelist, stypes = findnearestvlbi(
         radec_string, radius, catalog, sourcecat, return_dictionary=True)
     if frequency is None:
         sourceinfo = {}
         for src in sourcelist.keys():
             sourceinfo[src] = {'separation': sourcelist[src],
-                               'type': types[src]}
+                               'type': stypes[src]}
         return sourceinfo
     else:
         print "Querying ALMA catalog for flux densities."
@@ -73,7 +73,7 @@ def find_nearest_vlbi_sources(
                 mydict[src] = None
             else:
                 mydict[src]['separationDegrees'] = sourcelist[src]
-                mydict[src]['type'] = types[src]
+                mydict[src]['type'] = stypes[src]
                 allflux.append(mydict[src]['fluxDensity'])
                 allfluxsource.append(src)
                 allages.append(mydict[src]['meanAge'])
@@ -494,34 +494,58 @@ def get_alma_flux(
 
     if date == '':
         date = getcurrentdate(delimiter='-')
-    if lowbandFlux is not None or lowbandFrequency is not None or lowbandUncertainty is not None or lowbandDate is not None:
-        if lowbandFlux is None or lowbandFrequency is None or lowbandUncertainty is None or lowbandDate is None:
-            print "lowbandFlux, lowbandFrequency, lowbandUncertainty, lowbandDate must all be specified."
+    if (lowbandFlux is not None or
+            lowbandFrequency is not None or
+            lowbandUncertainty is not None or
+            lowbandDate is not None):
+        if (lowbandFlux is None or
+                lowbandFrequency is None or
+                lowbandUncertainty is None or
+                lowbandDate is None):
+            print("lowbandFlux, lowbandFrequency, lowbandUncertainty,"
+                  "lowbandDate must all be specified.")
             return
+
         lowbandFrequency = parseFrequencyArgumentToHz(lowbandFrequency)
-    if (
-                            highbandFlux is not None or highbandFrequency is not None or highbandUncertainty is not None or highbandDate is not None):
-        if (
-                                highbandFlux is None or highbandFrequency is None or highbandUncertainty is None or highbandDate is None):
-            print "highbandFlux, highbandFrequency, highbandUncertainty, highbandDate must all be specified."
+
+    if (highbandFlux is not None or
+            highbandFrequency is not None or
+            highbandUncertainty is not None or
+            highbandDate is not None):
+        if (highbandFlux is None or
+                highbandFrequency is None or
+                highbandUncertainty is None or
+                highbandDate is None):
+            print("highbandFlux, highbandFrequency, highbandUncertainty, "
+                  "highbandDate must all be specified.")
             return
         highbandFrequency = parseFrequencyArgument(highbandFrequency)
+
     if type(frequency) == str:
         frequency = parseFrequencyArgumentToHz(frequency)
+
     if frequency < 2000:
         frequency *= 1e9
+
     allresults = {}
     noLowBandMeasurement = True
     noHighBandMeasurement = True
+
     if ignorelowband and ignorehighband:
-        print "No measurements available."
+        print("No measurements available.")
         return
-    for band in [lowband, highband, 9]:
-        if band == lowband and ignorelowband: continue
-        if band == highband and ignorehighband: continue
+
+    for band in [lowband, 6, highband, 9]:
+        if band == lowband and ignorelowband:
+            continue
+        if band == highband and ignorehighband:
+            continue
         if verbose:
-            print "Calling searchFlux('%s', band='%s', date='%s', returnMostRecent=True, verbose=%s, searchAdjacentNames=%s)" % (
-            sourcename, band, date, verbose, searchAdjacentNames)
+            print(
+                "Calling searchFlux('%s', band='%s', date='%s', "
+                "returnMostRecent=True, verbose=%s, "
+                "searchAdjacentNames=%s)" % (
+                    sourcename, band, date, verbose, searchAdjacentNames))
         results = searchFlux(sourcename, band=band, date=date,
                              returnMostRecent=True,
                              verbose=verbose,
@@ -529,26 +553,38 @@ def get_alma_flux(
                              server=server, dayWindow=dayWindow)
         if band == 9:
             band = highband
+
+        if band == 6:
+            band = lowband
+
         if verbose:
-            print "Band %d results = " % band, results
-        if results is None: return None
+            print("Band %d results = %s" % (band, results))
+
+        if results is None:
+            return None
+
         if results == -1:
             if not silent:
-                print "No band %s measurements found for %s in the catalog" % (
-                band, sourcename)
+                print("No band %s measurements found for %s in the catalog" % (
+                    band, sourcename))
             continue  # source not found in catalog
+
         if dayWindow < 0:
             results = [results]
+
         allresults[band] = {}  # each key is an array of the same length
         allresults[band]['frequency'] = []
         allresults[band]['flux'] = []
         allresults[band]['uncertainty'] = []
         allresults[band]['age'] = []
+
         for result in results:
-            if (type(
-                    result) == NoneType or simulatelowband or simulateHighBand):
+            if (type(result) == NoneType or
+                    simulatelowband or
+                    simulateHighBand):
                 if type(result) == NoneType:
                     print "The calibrator database is not currently accessible."
+
                 if simulatelowband or simulateHighBand:
                     if simulatelowband:
                         allresults[lowband]['frequency'].append(90e9)
@@ -556,29 +592,34 @@ def get_alma_flux(
                         allresults[lowband]['uncertainty'].append(0.3)
                         allresults[lowband]['age'].append(100)
                         noLowBandMeasurement = False
+
                     if simulateHighBand:
                         allresults[lowband]['frequency'].append(340e9)
                         allresults[lowband]['flux'].append(1)
                         allresults[lowband]['uncertainty'].append(0.1)
                         allresults[lowband]['age'].append(100)
                         noHighBandMeasurement = False
+
                 else:
                     return None
+
             elif type(result) == int:
-                print "No Band %d observation in the catalog for this source" % (
-                band)
+                print("No Band %d observation in the catalog for this source" %
+                      band)
                 if band == highband:
                     if noLowBandMeasurement:
-                        print "No measurement in either band.  Cannot produce a flux density."
+                        print("No measurement in either band.  Cannot produce "
+                              "a flux density.")
                         return None
             else:
                 # Clean up the existing measurement, if necessary
                 if result['uncertainty'] == 0.0:
-                    print "No uncertainty in the catalog for this measurement, assuming 10 percent."
+                    print("No uncertainty in the catalog for this measurement, "
+                          "assuming 10 percent.")
                     result['uncertainty'] = 0.1 * (result['flux'])
                 if result['flux'] <= 0:
-                    print "WARNING: Found flux density = %f, discarding" % (
-                    result['flux'])
+                    print("WARNING: Found flux density = %f, discarding" % (
+                        result['flux']))
                     continue
                 if band == lowband:
                     noLowBandMeasurement = False
@@ -603,11 +644,13 @@ def get_alma_flux(
                         result['uncertainty'])
                     allresults[band]['age'].append(result['age'])
                 if not silent:
-                    print "Using Band %d measurement: %.3f +- %.3f (age=%d days) %.1f GHz" % (
-                    band, allresults[band]['flux'][-1],
-                    allresults[band]['uncertainty'][-1],
-                    allresults[band]['age'][-1],
-                    allresults[band]['frequency'][-1] * 1e-9)
+                    print(
+                        "Using Band %d measurement: %.3f +- %.3f "
+                        "(age=%d days) %.1f GHz" % (
+                            band, allresults[band]['flux'][-1],
+                            allresults[band]['uncertainty'][-1],
+                            allresults[band]['age'][-1],
+                            allresults[band]['frequency'][-1] * 1e-9))
 
         if date != '' and dayWindow < 0:
             if type(result) != int:
@@ -620,11 +663,12 @@ def get_alma_flux(
                                       server=server)
             if type(futureResult) != int:
                 if futureResult['date'] != result['date']:
-                    # then the measurement after the observation date is closer in time than the one
-                    # before, so use it
+                    # then the measurement after the observation date is closer
+                    # in time than the one before, so use it
                     result = python_copy.deepcopy(futureResult)
                     if result['uncertainty'] == 0.0:
-                        print "No uncertainty in the catalog for this measurement, assuming 10 percent."
+                        print("No uncertainty in the catalog for this "
+                              "measurement, assuming 10 percent.")
                         result['uncertainty'] = 0.1 * (result['flux'])
                     allresults[band]['frequency'].append(result['frequency'])
                     allresults[band]['flux'].append(result['flux'])
@@ -632,9 +676,12 @@ def get_alma_flux(
                         result['uncertainty'])
                     allresults[band]['age'].append(result['age'])
     # end 'for' loop over band
-    if allresults == {}: return -1
+    if allresults == {}:
+        return -1
+
     spectralIndex = defaultSpectralIndex
     spectralIndexUncertainty = defaultSpectralIndexUncertainty
+
     if noLowBandMeasurement or noHighBandMeasurement:
         if noLowBandMeasurement:
             band = highband
@@ -642,25 +689,29 @@ def get_alma_flux(
             band = lowband
         #        print "allresults.keys() = ", allresults.keys()
         freqs = [allresults[band]['frequency'][0]]
-        fluxDensity = allresults[band]['flux'][0] * (frequency /
-                                                     allresults[band][
-                                                         'frequency'][
-                                                         0]) ** spectralIndex
+        fluxDensity = (
+            allresults[band]['flux'][0] *
+            (frequency / allresults[band]['frequency'][0]) ** spectralIndex)
 
-        # The following does not account for uncertainty in the spectral index, but
-        # prevents a crash when defining mydict later.
-        fluxDensityUncertainty = fluxDensity * allresults[band]['uncertainty'][
-            0] / allresults[band]['flux'][0]
+        # The following does not account for uncertainty in the spectral index,
+        # but prevents a crash when defining mydict later.
+
+        fluxDensityUncertainty = (
+            fluxDensity *
+            allresults[band]['uncertainty'][0] / allresults[band]['flux'][0])
 
         intercept = np.log10(fluxDensity)
-        # interceptUncertainty should simply be the flux density uncertainty on the log scale
-        interceptUncertainty = 0.434 * allresults[band]['uncertainty'][0] / \
-                               allresults[band]['flux'][0]
+
+        # interceptUncertainty should simply be the flux density uncertainty on
+        # the log scale
+        interceptUncertainty = (0.434 * allresults[band]['uncertainty'][0] /
+                                allresults[band]['flux'][0])
         meanAge = allresults[band]['age'][0]
         meanOfLogX = np.log10(allresults[band]['frequency'][0] * 1e-9)
         ageDifference = 0
     else:
-        # compute the mean interval in days between the science observation and the flux monitoring observation
+        # compute the mean interval in days between the science observation and
+        # the flux monitoring observation
         meanAge = np.mean(
             np.abs([allresults[lowband]['age'] + allresults[highband]['age']]))
         ageDifference = fabs(np.mean(allresults[lowband]['age']) - np.mean(
@@ -671,9 +722,11 @@ def get_alma_flux(
         errors = allresults[lowband]['uncertainty'] + allresults[highband][
             'uncertainty']
         if verbose:
-            print "Calling linfit().spectralindex(freqs=%s, fluxes=%s, errors=%s, showplot=%s, plotfile='%s', source='%s', silent=%s)" % (
-            str(freqs), str(fluxes), str(errors), showplot, plotfile,
-            sourcename, silent)
+            print(
+                "Calling linfit().spectralindex(freqs=%s, fluxes=%s, errors=%s,"
+                " showplot=%s, plotfile='%s', source='%s', silent=%s)" %
+                (str(freqs), str(fluxes), str(errors), showplot, plotfile,
+                 sourcename, silent))
         mydict = linfit().spectralindex(freqs=freqs, fluxes=fluxes,
                                         errors=errors, showplot=showplot,
                                         plotfile=plotfile, source=sourcename,
@@ -686,14 +739,15 @@ def get_alma_flux(
         fluxDensity = fluxes[0] * (frequency / freqs[0]) ** spectralIndex
     logfit = True
     if not noLowBandMeasurement and not noHighBandMeasurement:
-        fluxDensityUncertainty, monteCarloFluxDensity = linfit().computeStdDevMonteCarlo(
-            spectralIndex,
-            spectralIndexUncertainty,
-            intercept,
-            interceptUncertainty,
-            frequency * 1e-9,
-            trials, logfit, meanOfLogX,
-            covar=mydict['covar'], silent=silent, returnMedian=True)
+        fluxDensityUncertainty, monteCarloFluxDensity = (
+            linfit().computeStdDevMonteCarlo(
+                spectralIndex,
+                spectralIndexUncertainty,
+                intercept,
+                interceptUncertainty,
+                frequency * 1e-9,
+                trials, logfit, meanOfLogX,
+                covar=mydict['covar'], silent=silent, returnMedian=True))
     else:
         # no monte carlo available, so just set it to the spectral index f.d.
         monteCarloFluxDensity = fluxDensity
