@@ -1906,9 +1906,16 @@ class linfit:
             # report the exact fit, and 1-sigma extrema fits
             si = np.log(fluxes[1] / float(fluxes[0])) / np.log(
                 freqs[1] / float(freqs[0]))
-            si1 = np.log(
-                (fluxes[1] + errors[1]) / (fluxes[0] - errors[0])) / np.log(
-                freqs[1] / float(freqs[0]))
+            try:
+                si1 = np.log(
+                    (fluxes[1] + errors[1]) / (fluxes[0] - errors[0])) / np.log(
+                    freqs[1] / float(freqs[0]))
+            except ZeroDivisionError:
+                print("ZeroDiv", freqs[1], float(freqs[0]), fluxes[0], errors[0],
+                      np.log(freqs[1] / float(freqs[0])))
+                si1 = np.log(
+                    (fluxes[1] + errors[1]) / (fluxes[0])) / np.log(
+                    freqs[1] / float(freqs[0]))
             si2 = np.log(
                 (fluxes[1] - errors[1]) / (fluxes[0] + errors[0])) / np.log(
                 freqs[1] / float(freqs[0]))
