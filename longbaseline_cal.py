@@ -692,7 +692,7 @@ def get_alma_flux(
         try:
             freqs = [allresults[band]['frequency'][0]]
         except KeyError:
-            return None
+            return -1
         fluxDensity = (
             allresults[band]['flux'][0] *
             (frequency / allresults[band]['frequency'][0]) ** spectralIndex)
