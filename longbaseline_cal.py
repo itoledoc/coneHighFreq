@@ -392,7 +392,7 @@ def angular_separation(ra0, dec0, ra1, dec1, return_components=False):
 def get_alma_flux(
         sourcename, frequency, lowband=3, highband=7, ignorelowband=False,
         ignorehighband=False, simulatelowband=False, simulateHighBand=False,
-        defaultSpectralIndex=-0.7, defaultSpectralIndexUncertainty=0.2,
+        defaultSpectralIndex=-0.6, defaultSpectralIndexUncertainty=0.2,
         verbose=False, trials=10000, date='', searchAdjacentNames=False,
         server='', dayWindow=0, showplot=False, plotfile='', silent=False,
         separationThreshold=14, maximumSensibleSpectralIndex=0.0,
@@ -1702,7 +1702,16 @@ class linfit:
         else:
             # residual variance cannot be calculated due to divide by zero
             # but the following formula seem to agree with the Monte Carlo approach
-            slopeFitError = fabs(slope) * np.sqrt(covar[1][1])
+            try:
+                slopeFitError = fabs(slope) * np.sqrt(covar[1][1])
+            except TypeError:
+                slopeFitError = 10.
+                mydict = {'spectralIndex': -0.6,
+                          'spectralIndexUncertainty': 0.5,
+                          'intercept': 0, 'interceptUncertainty': 0,
+                          'meanOfLogX': 0, 'yaxis': [], 'yaxisUncertainty': [],
+                          'covar': covar}
+
             yoffsetError = fabs(yoffset) * np.sqrt(covar[0][0])
         ampError = self.computeStdDevMonteCarlo(slope, slopeFitError, yoffset,
                                                 yoffsetError, freqUnNormalized,

@@ -77,7 +77,8 @@ if __name__ == "__main__":
     minflux = minFluxList[0]
 
     a = lbl.find_nearest_vlbi_sources(
-        coords, radius=opts.radius, frequency=frequency, phasecal_flux_limit=minflux)
+        coords, radius=opts.radius, frequency=frequency,
+        phasecal_flux_limit=minflux)
     df = pd.DataFrame(a).transpose()
 
     df.query('fluxDensity >= @minflux').sort(
