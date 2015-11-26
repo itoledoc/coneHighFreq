@@ -553,10 +553,10 @@ def get_alma_flux(
                              searchAdjacentNames=searchAdjacentNames,
                              server=server, dayWindow=dayWindow)
         if band == 9:
-            band = highband
+            band = 7
 
         if band == 6:
-            band = lowband
+            band = 3
 
         if verbose:
             print("Band %d results = %s" % (band, results))
@@ -689,7 +689,10 @@ def get_alma_flux(
         else:
             band = lowband
         #        print "allresults.keys() = ", allresults.keys()
-        freqs = [allresults[band]['frequency'][0]]
+        try:
+            freqs = [allresults[band]['frequency'][0]]
+        except KeyError:
+            return None
         fluxDensity = (
             allresults[band]['flux'][0] *
             (frequency / allresults[band]['frequency'][0]) ** spectralIndex)
@@ -1706,13 +1709,12 @@ class linfit:
             try:
                 slopeFitError = fabs(slope) * np.sqrt(covar[1][1])
             except TypeError:
-                slopeFitError = 10.
                 mydict = {'spectralIndex': -0.6,
                           'spectralIndexUncertainty': 0.5,
                           'intercept': 0, 'interceptUncertainty': 0,
                           'meanOfLogX': 0, 'yaxis': [], 'yaxisUncertainty': [],
                           'covar': covar}
-
+                return mydict
 
             yoffsetError = fabs(yoffset) * np.sqrt(covar[0][0])
         ampError = self.computeStdDevMonteCarlo(slope, slopeFitError, yoffset,
