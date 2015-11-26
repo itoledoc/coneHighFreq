@@ -8,6 +8,7 @@ import distutils.spawn
 import pylab as pb
 import calDatabaseQuery
 import os
+import random as rnd
 from scipy import optimize
 from types import NoneType
 from xmlrpclib import ServerProxy
@@ -1712,6 +1713,7 @@ class linfit:
                           'meanOfLogX': 0, 'yaxis': [], 'yaxisUncertainty': [],
                           'covar': covar}
 
+
             yoffsetError = fabs(yoffset) * np.sqrt(covar[0][0])
         ampError = self.computeStdDevMonteCarlo(slope, slopeFitError, yoffset,
                                                 yoffsetError, freqUnNormalized,
@@ -2268,8 +2270,8 @@ def pickRandomError():
     """
     w = 1.0
     while w >= 1.0:
-        x1 = 2.0 * random.random() - 1.0
-        x2 = 2.0 * random.random() - 1.0
+        x1 = 2.0 * rnd.random() - 1.0
+        x2 = 2.0 * rnd.random() - 1.0
         w = x1 * x1 + x2 * x2
 
     w = np.sqrt((-2.0 * np.log(w)) / w)
